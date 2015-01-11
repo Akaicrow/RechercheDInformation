@@ -40,11 +40,15 @@ int nbMot;//Nombre de mot dans un document
 int nbMotIndex;//Nombre de mot dans tous l'indexage
 char* nomDocument;
 elemRef *teteReference;//Table des reference ce vide a chzaque nouveaux document
+int nbRef;
+int nbRef2;
 
 //On fait appele a cette fonction au debut de chaque lecture de fichier corpus
 void initNewDoc(char* document)
 {
     int i;
+    nbRef=0;
+    nbRef2=0;
     elemIndex *pointeurCourant=NULL,*pointeurSupp=NULL;
     elemRef *courantElmRef=NULL, *suppElmRef=NULL;
 	Entity *pointeur = NULL ;
@@ -84,7 +88,7 @@ void initNewDoc(char* document)
 int addRef(int ref)
 {
     elemRef *NewElmRef =NULL,*pointeurCourant=NULL;
-    
+    nbRef++;
     NewElmRef = (elemRef*)malloc(sizeof(elemRef));
     if(NewElmRef==NULL)
     {
@@ -93,7 +97,7 @@ int addRef(int ref)
     }
     NewElmRef->ref=ref;
     NewElmRef->suivant=NULL;
-    
+
     if(teteReference==NULL)//Insertion a la tete
     {
         teteReference=NewElmRef;
@@ -110,9 +114,18 @@ int addRef(int ref)
 	return 0;
 }
 
+//VerifRef
+int verifNbRef()
+{
+    if (nbRef==nbRef2)return 1;
+    else return 0;
+}
+
 //On fait appel a cette fonction a chaque fois que l'on rencontre une références dans la partie référence
 int verifRef(char* ref)
 {
+    nbRef2++;
+    if((nbRef2+1-ref)!=0 ) return -1;
     char enPlus;
 	int numRef;
 	elemRef *teteDeReference =NULL;
@@ -198,10 +211,10 @@ int insert (char *name ,char *type)
 {
     int i,val = 0;
     Entity *pc =NULL,*ps = NULL;
-    
+
 	val=hacha(name);
 	insertIndex(name);
-	
+
     if (tab[val]==NULL) //n'existe pas, pas de collisions
     {
 		tab[val]= (Entity*)malloc(sizeof(Entity));
@@ -210,8 +223,8 @@ int insert (char *name ,char *type)
 			fprintf(stderr,"élément non inséré dans la TS\n");
 			exit (EXIT_FAILURE);
 		}
-		tab[val]->type=strdup(type); 
-		tab[val]->name=strdup(name); 
+		tab[val]->type=strdup(type);
+		tab[val]->name=strdup(name);
 		tab[val]->occ= 1;
 		if((tab[val]->type==NULL)||(tab[val]->name==NULL))
         {
@@ -225,19 +238,19 @@ int insert (char *name ,char *type)
         pc = tab[val];
         while (pc->Next!=NULL)
         {
-			if(!(strcmp(pc->name,name))) 
+			if(!(strcmp(pc->name,name)))
 			{
 				(pc->occ)++;
 				return 1;
 			}
 		    pc = pc->Next;
 		}
-		if(!(strcmp(pc->name,name))) 
+		if(!(strcmp(pc->name,name)))
 		{
 			(pc->occ)++;
 			return -1;
 		}
-        
+
         //Allouer une nouvelle Entite (pointeur)
         ps=(Entity*)malloc(sizeof(Entity));
         if(ps==NULL)
@@ -254,7 +267,7 @@ int insert (char *name ,char *type)
 		}
         ps->Next=NULL;
         ps->occ= 1;
-        
+
         //Chainage avec le nouveau element
         pc->Next=ps;
     }
@@ -265,10 +278,10 @@ int insertIndex(char* mot)
 {
     int val = 0;
     elemIndex *pc = NULL,*NewElmIndex = NULL ;
-    
+
 	val=hacha(mot);
 	nbMotIndex++;
-	
+
     if (indexage[val]==NULL)
     {
 		indexage[val]= (Entity*)malloc(sizeof(Entity));
@@ -293,7 +306,7 @@ int insertIndex(char* mot)
         pc = indexage[val];
         while (pc->suivant!=NULL)
         {
-			if(strcmp(pc->document,nomDocument)==0) 
+			if(strcmp(pc->document,nomDocument)==0)
 			{
 				(pc->occ)++;
 				printf("Element du meme document\n\n");
@@ -301,14 +314,14 @@ int insertIndex(char* mot)
 			}
 		    pc = pc->suivant;
 		}
-		
+
         NewElmIndex= (elemIndex*)malloc(sizeof(elemIndex));
         if(NewElmIndex==NULL)
         {
 			fprintf(stderr,"Element NewElmIndex non alloué (Fonction insert Index)\n");
 			exit (EXIT_FAILURE);
 		}
-		
+
 		NewElmIndex->mot=strdup(mot);
         NewElmIndex->document= strdup(nomDocument);
 		if(NewElmIndex->document==NULL || NewElmIndex->mot==NULL)
@@ -328,14 +341,14 @@ void saveFile()
 	elemIndex *pointeurCourant = NULL;
 	int i;
 	FILE *fichier =NULL ;
-	
+
 	fichier =fopen("textIndex.txt","w");
 	if(fichier==NULL)
 	{
 		fprintf(stderr,"erreur lors de l'ouverture du fichier textIndex.txt en écriture\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
     for(i=0;i<TAILLE_TABLE_INDEX;i++)
     {
 		pointeurCourant = indexage[i];
@@ -345,7 +358,7 @@ void saveFile()
 			pointeurCourant=pointeurCourant->suivant;
         }
     }
-    
+
     fclose(fichier);
 }
 
@@ -366,9 +379,9 @@ int createIndex()
 
 //Fonction qui verifie si le nombre maximum de mots dans un titre n'a pas été depassé (Routine semantque)
 int verificationTitre()
-{ 
-	if (nbMot > 10) 
-	{	
+{
+	if (nbMot > 10)
+	{
 		nbMot=0;
 		return 0;
 	}
@@ -378,9 +391,9 @@ int verificationTitre()
 
 //Fonction qui verifie si le nombre maximum de mots dans un paragraphe n'a pas été depassé (Routine semantque)
 int verificationParagraphe()
-{ 
+{
 	if (nbMot > 100)
-	{	
+	{
 		nbMot=0;
 		return 0;
 	}
@@ -395,7 +408,8 @@ int main(int argc, char *argv[])
 	DIR *repertoire;
 	char chemin[255];
 	struct dirent *contenu;
-	
+	nbRef=0;
+    nbRef2=0;
 	if(argc == 2)
 	{
 		nbMotIndex=0;
@@ -403,7 +417,7 @@ int main(int argc, char *argv[])
 		if(repertoire != NULL)
 		{
 			while (contenu = readdir (repertoire))//contenu represente soit un repertoire ou un dossier
-			{	
+			{
 				if(strcmp(contenu->d_name,".") && strcmp(contenu->d_name,".."))
 				{
 					strcpy(chemin,"./");
