@@ -27,7 +27,7 @@ CONCLUSION "CONCLUSION"
 REFERENCES "REFERENCES"
 Word [a-zA-Z][a-zA-Z0-9]*
 CompoundWord {Word}"-"{Word}
-Ponctuation	[?!:;]
+Ponctuation	[?!:;()]
 Ref "["[1-9][0-9]*"]"
 
 %%

@@ -253,7 +253,7 @@ int insert (char *name ,char *type)
 		if(!(strcmp(pc->name,name)))
 		{
 			(pc->occ)++;
-			return -1;
+			return 1;
 		}
 
         //Allouer une nouvelle Entite (pointeur)
@@ -314,10 +314,14 @@ int insertIndex(char* mot)
 			if(strcmp(pc->document,nomDocument)==0)
 			{
 				(pc->occ)++;
-				printf("Element du meme document\n\n");
 				return 1;
 			}
 		    pc = pc->suivant;
+		}
+		if(strcmp(pc->document,nomDocument)==0)
+		{
+			(pc->occ)++;
+			return 1;
 		}
 
         NewElmIndex= (elemIndex*)malloc(sizeof(elemIndex));
@@ -360,7 +364,7 @@ void saveFile()
 		pointeurCourant = indexage[i];
 		while(pointeurCourant !=NULL)
 		{
-			fprintf("%s %d %s",indexage[i]->mot,indexage[i]->occ,indexage[i]->document);
+			fprintf(fichier,"%s %d %s\n",indexage[i]->mot,indexage[i]->occ,indexage[i]->document);
 			pointeurCourant=pointeurCourant->suivant;
         }
     }
@@ -549,6 +553,7 @@ int main(int argc, char *argv[])
 							//createIndex();//un peu limite ici !!
 							saveFile();
 							printf("Fin de l'affichage de la table des symbole\n");
+							
 							//Initialisation de la liste des reference
 							courantElmRef =teteReference ->suivant ;
 							while(courantElmRef!=NULL)
