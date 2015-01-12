@@ -505,10 +505,6 @@ PonctuationMotRef: PonctuationMotRef Mot EspaceRefPonc
 ;
 EspaceRefPonc : Ref Space { addRef((char*)$1);}| Ponctuation Space |Space | Virgule Space 
 ;
-PonctuationMotRef  : Ponctuation
-|Space Mot 
-|Ref { addRef((char*)$1);}
-; 
 %%
 
 int yywrap(){
