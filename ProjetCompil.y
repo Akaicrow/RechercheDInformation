@@ -118,7 +118,7 @@ int addRef(char* refChar)
 	return 0;
 }
 
-//VerifRef
+//VerifNbRef
 int verifNbRef()
 {
     if (nbRef==nbRef2)return 1;
@@ -280,12 +280,13 @@ int insert (char *name ,char *type)
 
 int insertIndex(char* mot)
 {
-    int val = 0;
+    int val=0;
     elemIndex *pc = NULL,*NewElmIndex = NULL ;
+
 
 	val=hacha(mot);
 	nbMotIndex++;
-
+	
     if (indexage[val]==NULL)
     {
 		indexage[val]= (Entity*)malloc(sizeof(Entity));
@@ -310,14 +311,14 @@ int insertIndex(char* mot)
         pc = indexage[val];
         while (pc->suivant!=NULL)
         {
-			if(strcmp(pc->document,nomDocument)==0)
+			if(strcmp(pc->mot,mot)==0 && strcmp(pc->document,nomDocument)==0)
 			{
 				(pc->occ)++;
 				return 1;
 			}
 		    pc = pc->suivant;
 		}
-		if(strcmp(pc->document,nomDocument)==0)
+		if(strcmp(pc->mot,mot)==0 && strcmp(pc->document,nomDocument)==0)
 		{
 			(pc->occ)++;
 			return 1;
@@ -332,6 +333,7 @@ int insertIndex(char* mot)
 
 		NewElmIndex->mot=strdup(mot);
         NewElmIndex->document= strdup(nomDocument);
+        NewElmIndex->occ=1;
 		if(NewElmIndex->document==NULL || NewElmIndex->mot==NULL)
         {
 			fprintf(stderr,"Document ou mot non alloué dans NewElmIndex (Fonction insertIndex)\n");
@@ -340,6 +342,7 @@ int insertIndex(char* mot)
 
         NewElmIndex->suivant=NULL;
         pc->suivant=NewElmIndex;
+        
     }
 	return 0;
 }
@@ -359,11 +362,10 @@ void saveFile()
 
     for(i=0;i<TAILLE_TABLE_INDEX;i++)
     {
-
 		pointeurCourant = indexage[i];
 		while(pointeurCourant !=NULL)
 		{
-			fprintf(fichier,"%s %d %s\n",indexage[i]->mot,indexage[i]->occ,indexage[i]->document);
+			fprintf(fichier,"%s %d %s\n",pointeurCourant->mot,pointeurCourant->occ,pointeurCourant->document);
 			pointeurCourant=pointeurCourant->suivant;
         }
     }
@@ -471,15 +473,15 @@ RKEYWORDS : KEYWORDS Space ListMotVirgule Point SL
 ListMotVirgule : ListMotVirgule Virgule Space Mot 
 | Mot 
 ;
-RINTRODUCTION : INTRODUCTION SL ListeMotRefParagraphe 
+RINTRODUCTION : INTRODUCTION Space ListeMotRefParagraphe 
 ;
-RRELATEDWORKS : RELATEDWORKS SL ListeMotRefParagraphe 
+RRELATEDWORKS : RELATEDWORKS Space ListeMotRefParagraphe 
 ;
-RCONCEPTION : CONCEPTION SL ListeMotRefParagraphe 
+RCONCEPTION : CONCEPTION Space ListeMotRefParagraphe 
 ;
-REXPERIMENTALRESULTS : EXPERIMENTALRESULTS SL ListeMotRefParagraphe 
+REXPERIMENTALRESULTS : EXPERIMENTALRESULTS Space ListeMotRefParagraphe 
 ;
-RCONCLUSION : CONCLUSION SL ListeMotRefParagraphe 
+RCONCLUSION : CONCLUSION Space ListeMotRefParagraphe 
 ;
 RREFERENCES : REFERENCES SL ListeReference {if(!verifNbRef()) {yyerror("existance de référance non listé a la fin du document\n");return 3;}}
 ;
@@ -521,7 +523,7 @@ int main(int argc, char *argv[])
 	int result;
 	elemRef *courantElmRef=NULL;
 	FILE* indexage;
-	DIR *repertoire;
+	DIR *corpus;
 	char chemin[255];
 	struct dirent *contenu;
 	nbRef=0;
@@ -530,23 +532,27 @@ int main(int argc, char *argv[])
 	if(argc == 2)
 	{
 		nbMotIndex=0;
-		repertoire = opendir (argv[1]);
-		if(repertoire != NULL)
+		corpus = opendir (argv[1]);
+		if(corpus==NULL)
 		{
-			while (contenu = readdir (repertoire))//contenu represente soit un repertoire ou un dossier
+			fprintf(stderr,"répertoire non ouvert!\n");
+			exit(EXIT_FAILURE);
+		}
+		else
+		{
+			while (contenu = readdir (corpus))
 			{
 				if(strcmp(contenu->d_name,".") && strcmp(contenu->d_name,".."))
 				{
-					strcpy(chemin,"./");
-					strcat(chemin,argv[1]);
+					strcpy(chemin,argv[1]);
 					strcat(chemin,"/");
 					strcat(chemin,contenu->d_name);
                     yyin=fopen(chemin,"r");
-					if(yyin !=NULL)
+					if(yyin!=NULL)
 					{
                         nomDocument= contenu->d_name ;
                         initNewDoc(contenu->d_name);
-						printf("||||||||||||Debut validation du document: %s!|||||||||\n", contenu->d_name);
+						printf("Document: %s\n", contenu->d_name);
 						if(!yyparse())
 						{
 							print();//Affichage de la table des symbole
@@ -565,13 +571,12 @@ int main(int argc, char *argv[])
 
 						}
 						fclose(yyin);
-						printf("|||||||||||||Fin de la  validation du document: %s!||||||||\n", contenu->d_name);
 					}
 					else printf("Erreur : Fichier corromput: %s !\n",chemin);
 					strcpy(chemin,"");//On reinitialise notre chemin
 				}
 			}
-			closedir (repertoire);
+			closedir (corpus);
 		}
 	}
 	else printf("Argument en entrer non valide \n");

@@ -50,5 +50,5 @@ Ref "["[1-9][0-9]*"]"
 {Ref} {pos++; yylval=strdup(yytext) ;col= strlen(yytext);insert(strdup(yytext),"Références");return Ref;}
 {CompoundWord} {pos++;yylval=strdup(yytext); col+= strlen(yytext);insert(strdup(yytext),"Mot");return CompoundWord;}
 {Word}  {pos++;yylval=strdup(yytext); col+= strlen(yytext);insert(strdup(yytext),"Mot");return Word;}
-. {printf("Erreur lexical: élément non reconnut %s ligne %d colonne %d position %d \n ",strdup(yytext),ligne,col,pos);} 
+. {/*printf("Erreur lexical: élément non reconnut %s ligne %d colonne %d position %d \n ",strdup(yytext),ligne,col,pos);*/} 
 %%
