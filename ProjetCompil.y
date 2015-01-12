@@ -11,7 +11,6 @@
 
 extern FILE* yyin; 
 extern int pos, col,ligne;
-int indice=0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //la creation de la structure
@@ -420,15 +419,14 @@ int verificationParagraphe()
 	 	   
 %start CorpusDoc
 %%
-CorpusDoc : RTITLE {printf("après RTITLE\n");} RAUTHORS {printf("après RTITLE\n");} RABSTRACT {printf("après RTITLE\n");} RKEYWORDS {printf("après RKEYWORDS\n");} RINTRODUCTION {printf("après RINTRODUCTION\n");} RRELATEDWORKS {printf("après RRELATEDWORKS\n");} RCONCEPTION {printf("après RCONCEPTION\n");} REXPERIMENTALRESULTS {printf("après REXPERIMENTALRESULTS\n");}
-RCONCLUSION {printf("après RCONCLUSION\n");} RREFERENCES {printf("après RREFERENCES\n");}  {
+CorpusDoc : RTITLE RAUTHORS RABSTRACT RKEYWORDS RINTRODUCTION RRELATEDWORKS RCONCEPTION REXPERIMENTALRESULTS
+RCONCLUSION RREFERENCES {
 if(docVide()){ 
-printf("Document non valide\n");
-return 3;}
+yyerror("Document non valide\n");
+return -1;}
 };
 
-RTITLE : TITLE Space ListeMot {if(!verificationTitre()) {yyerror("La taille du titre n'est pas conforme\n");return 3;}nbMot=0;}
-SL 
+RTITLE : TITLE Space ListeMot {if(!verificationTitre()) {yyerror("La taille du titre n'est pas conforme\n");return -1;}nbMot=0;} SL 
 ;
 ListeMot : ListeMot Space Mot 
 | Mot ;
@@ -437,21 +435,29 @@ Mot : Word {nbMot++;insertIndex((char*)($1));}
 | CompoundWord {nbMot++;insertIndex((char*)($1));}
 ;
 
-RABSTRACT : ABSTRACT ListeMotParagraphe {if(!verificationParagraphe())
+RABSTRACT : ABSTRACT Space ListeMotParagraphe {if(!verificationParagraphe())
                                                     {
-														yyerror("La taille de l'Abstract n'est pas conforme\n");
-														return 3;  
+              yyerror("La taille de l'Abstract n'est pas conforme\n");
+              return -1;  
                                                     }
-													nbMot=0;
-                                                   } Point SL
-;
+             nbMot=0;
+                                                   } 
 
-ListeMotParagraphe :  ListeMotParagraphe PonctuationMot  
-| PonctuationMot 
+
+ListeMotParagraphe : PonctuationMot MotPointFinal  SL 
+| MotPointFinal  SL 
 ;
  
-PonctuationMot  : Ponctuation 
-| Space Mot 
+MotPointFinal : Mot Point 
+;
+
+PonctuationMot: PonctuationMot Mot EspacePonc 
+| Mot EspacePonc 
+;
+
+EspacePonc : Space 
+| Ponctuation Space
+| Virgule Space
 ;
 
 RAUTHORS : AUTHORS Space ListeMotVirguleAuteur Point SL 
@@ -475,21 +481,21 @@ REXPERIMENTALRESULTS : EXPERIMENTALRESULTS SL ListeMotRefParagraphe
 ;
 RCONCLUSION : CONCLUSION SL ListeMotRefParagraphe 
 ;
-RREFERENCES : REFERENCES SL ListeReference 
+RREFERENCES : REFERENCES SL ListeReference {if(!verifNbRef()) {yyerror("existance de référance non listé a la fin du document\n");return 3;}}
 ;
 ListeReference : ListeReference  RRef 
 | RRef 
 ;
-RRef :  Ref { indice=23; printf("après ref\n");} Tabulation {printf("je suis après tabulation\n");} SuiteDeMot SL {printf("Ligne 256 SAt !\n"); if(!verifRef((char*)$1)){
-											printf("reference declaré et non utilisé!\n");
+RRef :  Ref Tabulation SuiteDeMot SL {if(!verifRef((char*)$1)){
+											yyerror("reference declaré et non utilisé!\n");
 											return 3;}}
 ;
-SuiteDeMot : Mot  {printf("Mot ref suite%d\n",indice);}  Space SuiteDeMot 
-| Mot {printf("Mot ref non e\n",indice);} Point   
+SuiteDeMot : Mot Space SuiteDeMot 
+| Mot Point   
 ;
 ListeMotRefParagraphe :  ListeMotRefParagraphe PonctuationMotRef MotPoint  SL 
 | PonctuationMotRef MotPoint  SL 
-| MotPoint  SL {printf("Mot ref %d\n",indice);}
+| MotPoint  SL 
 ; 
 MotPoint : Mot Point 
 | Mot Ref Point {addRef((char*)$2);}
@@ -547,12 +553,9 @@ int main(int argc, char *argv[])
 						printf("||||||||||||Debut validation du document: %s!|||||||||\n", contenu->d_name);
 						if(!yyparse())
 						{
-							printf("s'il te plait print moi\n");
 							print();//Affichage de la table des symbole
-							printf("la normalement tu m'as print\n");
-							//createIndex();//un peu limite ici !!
+							createIndex();
 							saveFile();
-							printf("Fin de l'affichage de la table des symbole\n");
 							
 							//Initialisation de la liste des reference
 							courantElmRef =teteReference ->suivant ;
@@ -576,7 +579,6 @@ int main(int argc, char *argv[])
 		}
 	}
 	else printf("Argument en entrer non valide \n");
-	//En enregistre l'idex
 
 	return 0;
 }
