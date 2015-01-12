@@ -49,5 +49,5 @@ Ref "["[1-9][0-9]*"]"
 {REFERENCES} {pos++;col= strlen(yytext);return REFERENCES;}
 {Ref} {pos++; yylval=strdup(yytext) ;col= strlen(yytext);return Ref;}
 {Word}  {pos++;yylval=strdup(yytext); col+= strlen(yytext);return Word;}
-. {printf("Erreur lexical: element non reconnut %s ligne %d collone %d position %d \n ",strdup(yytext),ligne,col,pos);} 
+. {printf("Erreur lexical: élément non reconnut %s ligne %d colonne %d position %d \n ",strdup(yytext),ligne,col,pos);} 
 %%
