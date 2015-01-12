@@ -6,6 +6,9 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#define TAILLE_TS 1000
+#define TAILLE_TABLE_INDEX 1000
+
 extern FILE* yyin; 
 extern int pos, col,ligne;
 int indice=0;
@@ -45,6 +48,7 @@ char* nomDocument;
 elemRef *teteReference;//Table des reference ce vide a chzaque nouveaux document
 int nbRef;
 int nbRef2;
+
 //On fait appele a cette fonction au debut de chaque lecture de fichier corpus
 void initNewDoc(char* document)
 {
@@ -115,6 +119,7 @@ int addRef(int ref)
     }
 	return 0;
 }
+
 //VerifRef
 int verifNbRef()
 {
@@ -131,11 +136,11 @@ int verifRef(char* ref)
 	elemRef *teteDeReference =NULL;
 	teteDeReference = teteReference;
 	sscanf(ref, "%c%d", &enPlus, &numRef);
-	 if((nbRef2+1-numRef)!=0 )
-     {
-         printf("Reference non sequentielle\n");
-         return -1;
-     }
+	if((nbRef2+1-numRef)!=0 )
+    {
+        printf("Reference non sequentielle\n");
+        return -1;
+    }
     while(teteDeReference!=NULL && teteDeReference->ref!=numRef)
     {
        teteDeReference=teteDeReference->suivant;
@@ -422,7 +427,7 @@ printf("Document valide\n");
 return 3;}
 };
 
-RTITLE : TITLE Space ListeMot {if(!CheckTitle()) {yyerror("La taille du titre n'est pas conforme\n");return 3;}nbMot=0;}
+RTITLE : TITLE Space ListeMot {if(!verificationTitre()) {yyerror("La taille du titre n'est pas conforme\n");return 3;}nbMot=0;}
 SL {printf("Title Valide\n");};
 ListeMot : ListeMot Space Mot 
 | Mot ;
@@ -479,7 +484,7 @@ ListeMotRefParagraphe :  ListeMotRefParagraphe PonctuationMotRef MotPoint  SL
 | MotPoint  SL {printf("Mot ref %d\n",indice);}
 ; 
 MotPoint : Mot {nbMot++;} Point 
-| Mot {nbMot++;} Ref Point { addRef((char*)$2);}
+| Mot Ref Point { nbMot++;addRef((char*)$2);}
 ;
 PonctuationMotRef: PonctuationMotRef Mot EspaceRefPonc {nbMot++;}
 | Mot EspaceRefPonc {nbMot++;}
@@ -510,6 +515,7 @@ int main(int argc, char *argv[])
 	struct dirent *contenu;
 	nbRef=0;
     nbRef2=0;
+    nbMot=0;
 	if(argc == 2)
 	{
 		nbMotIndex=0;
