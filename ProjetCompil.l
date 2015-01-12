@@ -32,22 +32,23 @@ Ref "["[1-9][0-9]*"]"
 
 %%
 {Space} {col+= strlen(yytext);return Space;}
-{Ponctuation} {pos++;col+= strlen(yytext);return Ponctuation;}
-{Point} {pos++;col+= strlen(yytext);return Point ;} 
-{Virgule} {pos++;col+= strlen(yytext);return Virgule; }
+{Ponctuation} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Ponctuation");return Ponctuation;}
+{Point} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Point");return Point ;} 
+{Virgule} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Virgule");return Virgule; }
 {SL} { ligne++;pos=0;col=0; return SL;}
 {Tabulation} {pos++;col+= strlen(yytext);return Tabulation;}
-{TITLE} {pos++;col+= strlen(yytext);return TITLE ;}
-{AUTHORS} {pos++;col+= strlen(yytext);return AUTHORS;}
-{ABSTRACT} {pos++;col+= strlen(yytext);return ABSTRACT;}
-{KEYWORDS} {pos++;return KEYWORDS;}
-{INTRODUCTION} {pos++;return INTRODUCTION;} 
-{RELATEDWORKS} {pos++;return RELATEDWORKS;}
-{CONCEPTION} {pos++;return CONCEPTION;}
-{EXPERIMENTALRESULTS} {pos++;col+= strlen(yytext);return EXPERIMENTALRESULTS;}
-{CONCLUSION} {pos++;col+= strlen(yytext);return CONCLUSION;}
-{REFERENCES} {pos++;col= strlen(yytext);return REFERENCES;}
-{Ref} {pos++; yylval=strdup(yytext) ;col= strlen(yytext);return Ref;}
-{Word}  {pos++;yylval=strdup(yytext); col+= strlen(yytext);return Word;}
+{TITLE} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return TITLE ;}
+{AUTHORS} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return AUTHORS;}
+{ABSTRACT} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return ABSTRACT;}
+{KEYWORDS} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return KEYWORDS;}
+{INTRODUCTION} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return INTRODUCTION;} 
+{RELATEDWORKS} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return RELATEDWORKS;}
+{CONCEPTION} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return CONCEPTION;}
+{EXPERIMENTALRESULTS} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return EXPERIMENTALRESULTS;}
+{CONCLUSION} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return CONCLUSION;}
+{REFERENCES} {pos++;col+= strlen(yytext);insert(strdup(yytext),"Mot Clé");return REFERENCES;}
+{Ref} {pos++; yylval=strdup(yytext) ;col= strlen(yytext);insert(strdup(yytext),"Références");return Ref;}
+{CompoundWord} {pos++;yylval=strdup(yytext); col+= strlen(yytext);insert(strdup(yytext),"Mot");return CompoundWord;}
+{Word}  {pos++;yylval=strdup(yytext); col+= strlen(yytext);insert(strdup(yytext),"Mot");return Word;}
 . {printf("Erreur lexical: élément non reconnut %s ligne %d colonne %d position %d \n ",strdup(yytext),ligne,col,pos);} 
 %%

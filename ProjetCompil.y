@@ -52,22 +52,18 @@ int nbRef2;
 //On fait appele a cette fonction au debut de chaque lecture de fichier corpus
 void initNewDoc(char* document)
 {
+	elemIndex *pointeurCourant=NULL,*pointeurSupp=NULL;
+	Entity *pointeur = NULL ;
     int i;
+    
     nbRef=0;
     nbRef2=0;
-    elemIndex *pointeurCourant=NULL,*pointeurSupp=NULL;
-    elemRef *courantElmRef=NULL, *suppElmRef=NULL;
-	Entity *pointeur = NULL ;
     nbMot=0;
+    ligne=0;
+
     nomDocument=document;
-    //Initialisation de la liste des reference
-    courantElmRef =teteReference ;
-    while(courantElmRef!=NULL)
-    {
-        suppElmRef= courantElmRef;
-        courantElmRef=courantElmRef->suivant;
-        free(suppElmRef);
-    }
+    
+    
     //Initialisation de la table des symbole
     for(i=0;i<TAILLE_TS;i++)
     {
@@ -91,32 +87,35 @@ void initNewDoc(char* document)
 }
 
 //On fait appel a cette fonction a chaque lecture d'une référence dans hors de la liste de référence
-int addRef(int ref)
+int addRef(char* refChar)
 {
-    elemRef *NewElmRef =NULL,*pointeurCourant=NULL;
-    nbRef++;
-    NewElmRef = (elemRef*)malloc(sizeof(elemRef));
-    if(NewElmRef==NULL)
-    {
+	char enPlus;
+	int ref;
+	sscanf(refChar, "%c%d", &enPlus, &ref);
+	elemRef *NewElmRef =NULL,*pointeurCourant=NULL;
+	nbRef++;
+	NewElmRef = (elemRef*)malloc(sizeof(elemRef));
+	if(NewElmRef==NULL)
+	{
 		fprintf(stderr,"Element elmRef non allouer (Fonction addRef)\n");
 		exit(EXIT_FAILURE);
-    }
-    NewElmRef->ref=ref;
-    NewElmRef->suivant=NULL;
+	}
+	NewElmRef->ref=ref;
+	NewElmRef->suivant=NULL;
 
-    if(teteReference==NULL)//Insertion a la tete
-    {
-        teteReference=NewElmRef;
-    }
-    else
-    {
-        pointeurCourant=teteReference;
-        while(pointeurCourant->suivant!=NULL)
-        {
-            pointeurCourant=pointeurCourant->suivant;
-        }
-        pointeurCourant->suivant=NewElmRef;
-    }
+	if(teteReference==NULL)//Insertion a la tete
+	{
+		teteReference=NewElmRef;
+	}
+	else
+	{
+		pointeurCourant=teteReference;
+		while(pointeurCourant->suivant!=NULL)
+		{
+			pointeurCourant=pointeurCourant->suivant;
+		}
+		pointeurCourant->suivant=NewElmRef;
+	}
 	return 0;
 }
 
@@ -130,7 +129,6 @@ int verifNbRef()
 //On fait appel a cette fonction a chaque fois que l'on rencontre une références dans la partie référence
 int verifRef(char* ref)
 {
-    nbRef2++;
     char enPlus;
 	int numRef;
 	elemRef *teteDeReference =NULL;
@@ -141,6 +139,7 @@ int verifRef(char* ref)
         printf("Reference non sequentielle\n");
         return -1;
     }
+    nbRef2++;
     while(teteDeReference!=NULL && teteDeReference->ref!=numRef)
     {
        teteDeReference=teteDeReference->suivant;
@@ -171,36 +170,32 @@ Entity* search(char* name)
 void print()
 {
 	int i;
-	printf(" __________________________________________________________________________\n");
-	printf("| INDICE | TYPE                    | Entite				   | nombre d'occurences	|\n");
+	Entity *pc = NULL;
+	printf(" ___________________________________________________________________________________________________\n");
+	printf("| INDICE | TYPE                    | Entite				   | nombre d'occurences   |\n");
 
 	for (i=0; i < TAILLE_TS ;i++)
 	{
-		if (tab[i]->type!=NULL)
+		if (tab[i]!=NULL)
 		{
-			Entity *pc = &tab[i];
+			pc = tab[i];
 			while (pc !=NULL)
 			{
-				if(pc!=tab+i)
+				if(pc!=tab[i])
 				{
-					printf("|	 |_________________________________________________________________|\n");
-					printf("|        | 	      %s	   |	         %s |	%d		|\n",pc->type,pc->name,pc->occ);
+					printf("|	 |_________________________________________________________________________________________|\n");
+					printf("|        | 	      %s	   |	         %s          |	      %d		   |\n",pc->type,pc->name,pc->occ);
 				}
 				else
 				{
-					printf("|________|_________________________________________________________________|\n");
-					printf("|   %d    | 	      %s	   |	         %s\n",i,pc->type,pc->name);
+					printf("|________|_________________________________________________________________________________________|\n");
+					printf("|   %d   | 	      %s	   |	         %s          |	      %d		   |\n",i,pc->type,pc->name,pc->occ);
 				}
 				pc = pc->Next;
 			}
 		}
-		else
-		{
-			printf("|________|_________________________________________________________________|\n");
-			printf("|   %d    | 	       \t	   |	         \t\n",i);
-		}
 	}
-	printf("|________|_________________________|_______________________________________|\n");
+	printf("|________|_________________________|_______________________________________________________________|\n");
 	printf(" \n");
 }
 
@@ -209,7 +204,7 @@ int docVide()
 	int i;
     for(i=0;i<TAILLE_TS;i++)
     {
-        if(tab[i]->occ!=0)//Les element du tableux deja initialiser
+        if(tab[i]!=NULL)//Les element du tableux deja initialiser
         {
             return 0;
         }
@@ -223,7 +218,7 @@ int insert (char *name ,char *type)
     Entity *pc =NULL,*ps = NULL;
 
 	val=hacha(name);
-	insertIndex(name);
+	
 
     if (tab[val]==NULL) //n'existe pas, pas de collisions
     {
@@ -421,19 +416,23 @@ int verificationParagraphe()
 	 	   
 %start CorpusDoc
 %%
-CorpusDoc :  RTITLE RAUTHORS RABSTRACT RKEYWORDS RINTRODUCTION RRELATEDWORKS RCONCEPTION REXPERIMENTALRESULTS 
-RCONCLUSION RREFERENCES {if(!docVide()){ 
-printf("Document valide\n");
+CorpusDoc : RTITLE {printf("après RTITLE\n");} RAUTHORS {printf("après RTITLE\n");} RABSTRACT {printf("après RTITLE\n");} RKEYWORDS {printf("après RKEYWORDS\n");} RINTRODUCTION {printf("après RINTRODUCTION\n");} RRELATEDWORKS {printf("après RRELATEDWORKS\n");} RCONCEPTION {printf("après RCONCEPTION\n");} REXPERIMENTALRESULTS {printf("après REXPERIMENTALRESULTS\n");}
+RCONCLUSION {printf("après RCONCLUSION\n");} RREFERENCES {printf("après RREFERENCES\n");}  {
+if(docVide()){ 
+printf("Document non valide\n");
 return 3;}
 };
 
 RTITLE : TITLE Space ListeMot {if(!verificationTitre()) {yyerror("La taille du titre n'est pas conforme\n");return 3;}nbMot=0;}
-SL {printf("Title Valide\n");};
+SL 
+;
 ListeMot : ListeMot Space Mot 
 | Mot ;
-Mot : Word 
-| CompoundWord
+
+Mot : Word {nbMot++;insertIndex((char*)($1));}
+| CompoundWord {nbMot++;insertIndex((char*)($1));}
 ;
+
 RABSTRACT : ABSTRACT ListeMotParagraphe {if(!verificationParagraphe())
                                                     {
 														yyerror("La taille de l'Abstract n'est pas conforme\n");
@@ -442,21 +441,25 @@ RABSTRACT : ABSTRACT ListeMotParagraphe {if(!verificationParagraphe())
 													nbMot=0;
                                                    } Point SL
 ;
+
 ListeMotParagraphe :  ListeMotParagraphe PonctuationMot  
 | PonctuationMot 
-; 
-PonctuationMot  : Ponctuation 
-|Space Mot {nbMot++;}
 ;
+ 
+PonctuationMot  : Ponctuation 
+| Space Mot 
+;
+
 RAUTHORS : AUTHORS Space ListeMotVirguleAuteur Point SL 
 ;
-ListeMotVirguleAuteur : ListeMotVirguleAuteur Virgule Space Mot Space Mot {nbMot++;nbMot++;}
-| Mot Space Mot {nbMot++;nbMot++;}
+
+ListeMotVirguleAuteur : ListeMotVirguleAuteur Virgule Space Mot Space Mot 
+| Mot Space Mot 
 ;
 RKEYWORDS : KEYWORDS Space ListMotVirgule Point SL
 ;
-ListMotVirgule : ListMotVirgule Virgule Space Mot {nbMot++;}
-| Mot {nbMot++;}
+ListMotVirgule : ListMotVirgule Virgule Space Mot 
+| Mot 
 ;
 RINTRODUCTION : INTRODUCTION SL ListeMotRefParagraphe 
 ;
@@ -468,31 +471,32 @@ REXPERIMENTALRESULTS : EXPERIMENTALRESULTS SL ListeMotRefParagraphe
 ;
 RCONCLUSION : CONCLUSION SL ListeMotRefParagraphe 
 ;
-RREFERENCES : REFERENCES SL ListeReference
+RREFERENCES : REFERENCES SL ListeReference 
 ;
-ListeReference : ListeReference  RRef | RRef {printf("Ligne 235 SAt !\n");}
+ListeReference : ListeReference  RRef 
+| RRef 
 ;
-RRef :  Ref { indice=23;} Tabulation SuiteDeMot SL {printf("Ligne 256 SAt !\n"); if(!verifRef((char*)$1)){
+RRef :  Ref { indice=23; printf("après ref\n");} Tabulation {printf("je suis après tabulation\n");} SuiteDeMot SL {printf("Ligne 256 SAt !\n"); if(!verifRef((char*)$1)){
 											printf("reference declaré et non utilisé!\n");
 											return 3;}}
 ;
-SuiteDeMot : SuiteDeMot Mot Space {printf("Mot ref %d\n",indice);}
-|Mot Point {printf("Mot ref %d\n",indice);}
+SuiteDeMot : Mot  {printf("Mot ref suite%d\n",indice);}  Space SuiteDeMot 
+| Mot {printf("Mot ref non e\n",indice);} Point   
 ;
 ListeMotRefParagraphe :  ListeMotRefParagraphe PonctuationMotRef MotPoint  SL 
 | PonctuationMotRef MotPoint  SL 
 | MotPoint  SL {printf("Mot ref %d\n",indice);}
 ; 
-MotPoint : Mot {nbMot++;} Point 
-| Mot Ref Point { nbMot++;addRef((char*)$2);}
+MotPoint : Mot Point 
+| Mot Ref Point {addRef((char*)$2);}
 ;
-PonctuationMotRef: PonctuationMotRef Mot EspaceRefPonc {nbMot++;}
-| Mot EspaceRefPonc {nbMot++;}
+PonctuationMotRef: PonctuationMotRef Mot EspaceRefPonc 
+| Mot EspaceRefPonc 
 ;
 EspaceRefPonc : Ref Space { addRef((char*)$1);}| Ponctuation Space |Space | Virgule Space 
 ;
 PonctuationMotRef  : Ponctuation
-|Space Mot {nbMot++;}
+|Space Mot 
 |Ref { addRef((char*)$1);}
 ; 
 %%
@@ -509,6 +513,7 @@ return 1;
 int main(int argc, char *argv[])
 {
 	int result;
+	elemRef *courantElmRef=NULL;
 	FILE* indexage;
 	DIR *repertoire;
 	char chemin[255];
@@ -538,10 +543,22 @@ int main(int argc, char *argv[])
 						printf("||||||||||||Debut validation du document: %s!|||||||||\n", contenu->d_name);
 						if(!yyparse())
 						{
+							printf("s'il te plait print moi\n");
 							print();//Affichage de la table des symbole
-							createIndex();//un peu limite ici !!
+							printf("la normalement tu m'as print\n");
+							//createIndex();//un peu limite ici !!
 							saveFile();
 							printf("Fin de l'affichage de la table des symbole\n");
+							//Initialisation de la liste des reference
+							courantElmRef =teteReference ->suivant ;
+							while(courantElmRef!=NULL)
+							{
+								courantElmRef=teteReference ->suivant ;
+								free(teteReference);
+								teteReference=courantElmRef;
+							}
+							teteReference=NULL;
+
 						}
 						fclose(yyin);
 						printf("|||||||||||||Fin de la  validation du document: %s!||||||||\n", contenu->d_name);
