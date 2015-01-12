@@ -42,7 +42,6 @@ char* nomDocument;
 elemRef *teteReference;//Table des reference ce vide a chzaque nouveaux document
 int nbRef;
 int nbRef2;
-
 //On fait appele a cette fonction au debut de chaque lecture de fichier corpus
 void initNewDoc(char* document)
 {
@@ -113,7 +112,6 @@ int addRef(int ref)
     }
 	return 0;
 }
-
 //VerifRef
 int verifNbRef()
 {
@@ -125,12 +123,16 @@ int verifNbRef()
 int verifRef(char* ref)
 {
     nbRef2++;
-    if((nbRef2+1-ref)!=0 ) return -1;
     char enPlus;
 	int numRef;
 	elemRef *teteDeReference =NULL;
 	teteDeReference = teteReference;
 	sscanf(ref, "%c%d", &enPlus, &numRef);
+	 if((nbRef2+1-numRef)!=0 )
+     {
+         printf("Reference non sequentielle\n");
+         return -1;
+     }
     while(teteDeReference!=NULL && teteDeReference->ref!=numRef)
     {
        teteDeReference=teteDeReference->suivant;
@@ -338,7 +340,8 @@ int insertIndex(char* mot)
 
 void saveFile()
 {
-	elemIndex *pointeurCourant = NULL;
+	indexage *pointeurCourant = NULL;
+	Documents *pointeurDoc = NULL;
 	int i;
 	FILE *fichier =NULL ;
 
@@ -351,11 +354,17 @@ void saveFile()
 
     for(i=0;i<TAILLE_TABLE_INDEX;i++)
     {
+        //Il manque un while ici
 		pointeurCourant = indexage[i];
 		while(pointeurCourant !=NULL)
 		{
-			fprintf("%s %d %s",pointeurCourant[i]->mot,pointeurCourant[i]->occ,pointeurCourant[i]->document);
-			pointeurCourant=pointeurCourant->suivant;
+		    pointeurDoc= indexage[i]->nextDocument ;
+		    while(pointeurDoc!=NULL)
+            {
+                fprintf(fichier,"%s %d %s \n",indexage[i]->mot,pointeurDoc->occ,pointeurDoc->document);
+                pointeurDoc=pointeurDoc->suivant ;
+            }
+            pointeurCourant=pointeurCourant->suivant;
         }
     }
 
